@@ -49,6 +49,12 @@ func (b *Buffer) ClearAt(x, y int) {
 	b.Cells[b.index(x, y)].Rune = ' '
 }
 
+func (b *Buffer) Clear() {
+	for i := range b.Cells {
+		b.Cells[i] = Cell{}
+	}
+}
+
 var Glyphs = []rune(" .:-=+*#%@")
 
 func (b *Buffer) FillRandom() {
