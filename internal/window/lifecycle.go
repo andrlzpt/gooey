@@ -10,14 +10,20 @@ type State struct {
 	IsMouseInsideWindow bool
 }
 
-func Run(loop Loop) {
+type Config struct {
+	Width  int
+	Height int
+	Title  string
+}
+
+func Run(config Config, loop Loop) {
 	err := glfw.Init()
 	if err != nil {
 		panic(err)
 	}
 	defer glfw.Terminate()
 
-	window, err := glfw.CreateWindow(640, 480, "gooey", nil, nil)
+	window, err := glfw.CreateWindow(config.Width, config.Height, config.Title, nil, nil)
 	if err != nil {
 		panic(err)
 	}
