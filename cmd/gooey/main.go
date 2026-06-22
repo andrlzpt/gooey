@@ -1,6 +1,10 @@
 package main
 
 import (
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
+	"os"
 	"runtime"
 
 	"github.com/andrlzpt/gooey/internal/ascii"
@@ -34,12 +38,24 @@ func main() {
 	bufferWidth := WindowWidth / CellWidth
 	bufferHeight := WindowHeight / CellHeight
 	buffer := ascii.NewBuffer(bufferWidth, bufferHeight)
+
+	file, err := os.Open("test.png")
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	img, _, err := image.Decode(file)
+	if err != nil {
+		panic(err)
+	}
+
 	window.Run(windowConfig, func(state *window.State) {
-		loop(state, buffer)
+		loop(state, buffer, img)
 	})
 }
 
-func loop(state *window.State, buffer *ascii.Buffer) {
+func loop(state *window.State, buffer *ascii.Buffer, img image.Image) {
 	buffer.Clear()
 	// buffer.FillRandom()
 	// ascii.DrawText(buffer, 2, 2, "GOOEY")
@@ -47,14 +63,17 @@ func loop(state *window.State, buffer *ascii.Buffer) {
 	// if state.IsMouseInsideWindow {
 	// 	eraseCircle(buffer, state)
 	// }
-	glyph := ascii.Glyphs[len(ascii.Glyphs)-1]
-	ascii.DrawRect(buffer, 0, 0, 12, 12, glyph)
+	// glyph := ascii.Glyphs[len(ascii.Glyphs)-1]
+	// ascii.DrawRect(buffer, 0, 0, 12, 12, glyph)
 
-	ascii.FillRect(buffer, 24, 0, 12, 12, glyph)
+	// ascii.FillRect(buffer, 24, 0, 12, 12, glyph)
 
-	ascii.DrawCircle(buffer, 54, 8, 8, glyph)
+	// ascii.DrawCircle(buffer, 54, 8, 8, glyph)
 
-	ascii.FillCircle(buffer, 72, 8, 8, glyph)
+	// ascii.FillCircle(buffer, 72, 8, 8, glyph)
+
+	// ascii.DrawImage(buffer, img, 0, 0, buffer.Width, buffer.Height)
+	ascii.DrawImage(buffer, img, 0, 0, 60, 40)
 
 	renderer.Render(buffer, renderConfig)
 }

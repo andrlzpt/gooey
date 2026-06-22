@@ -1,5 +1,31 @@
 package ascii
 
+import "image"
+
+const maxRGBAChannel = 65535
+
+func DrawImage(buffer *Buffer, img image.Image, x, y, width, height int) {
+	if width <= 0 || height <= 0 {
+		return
+	}
+	bounds := img.Bounds()
+	imageWidth := bounds.Dx()
+	imageHeight := bounds.Dy()
+
+	for destY := range height {
+		for destX := range width {
+			srcX := bounds.Min.X + destX*imageWidth/width
+			srcY := bounds.Min.Y + destY*imageHeight/height
+			r, g, b, _ := img.At(srcX, srcY).RGBA()
+			brightness := (r + g + b) / 3
+			glyphIndex := int(brightness * uint32(len(Glyphs)-1) / maxRGBAChannel)
+			glyph := Glyphs[glyphIndex]
+			buffer.Set(x+destX, y+destY, glyph)
+		}
+	}
+
+}
+
 func FillCircle(buffer *Buffer, centerX, centerY, radius int, r rune) {
 	radiusSquared := radius * radius
 
