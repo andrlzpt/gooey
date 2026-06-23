@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	_ "image/jpeg"
 	_ "image/png"
+	"os"
 	"runtime"
+	"strings"
 
 	"github.com/andrlzpt/gooey/internal/ascii"
 	"github.com/andrlzpt/gooey/internal/renderer"
@@ -40,9 +44,14 @@ type Particle struct {
 const Gravity = 40.0
 const Bounce = 0.8
 
+type Command struct {
+	Raw string
+}
+
 func main() {
 
 	runtime.LockOSThread()
+
 	bufferWidth := WindowWidth / CellWidth
 	bufferHeight := WindowHeight / CellHeight
 	buffer := ascii.NewBuffer(bufferWidth, bufferHeight)
@@ -64,12 +73,34 @@ func main() {
 		VX: 20,
 		VY: 0,
 	}
+
+	commands := make(chan Command, 16)
+	go readCommands(commands)
+
 	window.Run(windowConfig, func(state *window.State) {
-		loop(state, buffer, &particle)
+		loop(state, buffer, &particle, commands)
 	})
 }
 
-func loop(state *window.State, buffer *ascii.Buffer, particle *Particle) {
+func readCommands(commands chan<- Command) {
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		commands <- Command{Raw: line}
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("reading command err = %v", err)
+	}
+
+}
+
+func loop(state *window.State, buffer *ascii.Buffer, particle *Particle, commands <-chan Command) {
 	buffer.Clear()
 	// buffer.FillRandom()
 	// ascii.DrawText(buffer, 2, 2, "GOOEY")
@@ -88,6 +119,8 @@ func loop(state *window.State, buffer *ascii.Buffer, particle *Particle) {
 
 	// ascii.DrawImage(buffer, img, 0, 0, buffer.Width, buffer.Height)
 	// ascii.DrawImage(buffer, img, 0, 0, 60, 40)
+
+	handleCommands(commands, particle)
 
 	particle.VY += Gravity * state.DeltaTime
 	particle.X += particle.VX * state.DeltaTime
@@ -117,6 +150,29 @@ func loop(state *window.State, buffer *ascii.Buffer, particle *Particle) {
 	}
 	ascii.DrawPoint(buffer, int(particle.X), int(particle.Y), '@')
 	renderer.Render(buffer, renderConfig)
+}
+
+func handleCommands(commands <-chan Command, particle *Particle) {
+	for {
+		select {
+		case command := <-commands:
+			handleCommand(command, particle)
+		default:
+			return
+		}
+	}
+}
+
+func handleCommand(command Command, particle *Particle) {
+	switch command.Raw {
+	case "reset":
+		particle.X = 160
+		particle.Y = 2
+		particle.VX = 20
+		particle.VY = 0
+	default:
+		fmt.Println("unknown command:", command.Raw)
+	}
 }
 
 func eraseCircle(buffer *ascii.Buffer, state *window.State) {
