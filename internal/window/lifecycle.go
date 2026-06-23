@@ -8,6 +8,9 @@ type State struct {
 	MouseX              float64
 	MouseY              float64
 	IsMouseInsideWindow bool
+	DeltaTime           float64
+	ElapsedTime         float64
+	FrameCount          uint64
 }
 
 type Config struct {
@@ -33,7 +36,13 @@ func Run(config Config, loop Loop) {
 	window.SetCursorEnterCallback(func(w *glfw.Window, entered bool) {
 		state.IsMouseInsideWindow = entered
 	})
+	lastTime := glfw.GetTime()
 	for !window.ShouldClose() {
+		currentTime := glfw.GetTime()
+		state.DeltaTime = currentTime - lastTime
+		state.ElapsedTime = currentTime
+		state.FrameCount++
+		lastTime = currentTime
 		x, y := window.GetCursorPos()
 		state.MouseX = x
 		state.MouseY = y
