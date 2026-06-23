@@ -1,10 +1,8 @@
 package main
 
 import (
-	"image"
 	_ "image/jpeg"
 	_ "image/png"
-	"os"
 	"runtime"
 
 	"github.com/andrlzpt/gooey/internal/ascii"
@@ -32,6 +30,16 @@ var renderConfig = renderer.Config{
 	CellHeight:   CellHeight,
 }
 
+type Particle struct {
+	X  float64
+	Y  float64
+	VX float64
+	VY float64
+}
+
+const Gravity = 40.0
+const Bounce = 0.8
+
 func main() {
 
 	runtime.LockOSThread()
@@ -39,23 +47,29 @@ func main() {
 	bufferHeight := WindowHeight / CellHeight
 	buffer := ascii.NewBuffer(bufferWidth, bufferHeight)
 
-	file, err := os.Open("test.png")
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
+	// file, err := os.Open("test.png")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer file.Close()
 
-	img, _, err := image.Decode(file)
-	if err != nil {
-		panic(err)
-	}
+	// img, _, err := image.Decode(file)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
+	particle := Particle{
+		X:  float64(buffer.Width / 2),
+		Y:  2,
+		VX: 20,
+		VY: 0,
+	}
 	window.Run(windowConfig, func(state *window.State) {
-		loop(state, buffer, img)
+		loop(state, buffer, &particle)
 	})
 }
 
-func loop(state *window.State, buffer *ascii.Buffer, img image.Image) {
+func loop(state *window.State, buffer *ascii.Buffer, particle *Particle) {
 	buffer.Clear()
 	// buffer.FillRandom()
 	// ascii.DrawText(buffer, 2, 2, "GOOEY")
@@ -73,8 +87,35 @@ func loop(state *window.State, buffer *ascii.Buffer, img image.Image) {
 	// ascii.FillCircle(buffer, 72, 8, 8, glyph)
 
 	// ascii.DrawImage(buffer, img, 0, 0, buffer.Width, buffer.Height)
-	ascii.DrawImage(buffer, img, 0, 0, 60, 40)
+	// ascii.DrawImage(buffer, img, 0, 0, 60, 40)
 
+	particle.VY += Gravity * state.DeltaTime
+	particle.X += particle.VX * state.DeltaTime
+	particle.Y += particle.VY * state.DeltaTime
+
+	maxX := float64(buffer.Width - 1)
+	maxY := float64(buffer.Height - 1)
+
+	if particle.X < 0 {
+		particle.X = 0
+		particle.VX = -particle.VX * Bounce
+	}
+
+	if particle.X > maxX {
+		particle.X = maxX
+		particle.VX = -particle.VX * Bounce
+	}
+
+	if particle.Y < 0 {
+		particle.Y = 0
+		particle.VY = -particle.VY * Bounce
+	}
+
+	if particle.Y > maxY {
+		particle.Y = maxY
+		particle.VY = -particle.VY * Bounce
+	}
+	ascii.DrawPoint(buffer, int(particle.X), int(particle.Y), '@')
 	renderer.Render(buffer, renderConfig)
 }
 
