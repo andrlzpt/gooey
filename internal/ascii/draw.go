@@ -85,11 +85,10 @@ func FillRect(buffer *Buffer, x, y, width, height int, r rune) {
 }
 
 func DrawRect(buffer *Buffer, x, y, width, height int, r rune) {
-	DrawHorizontalLine(buffer, x, y, x+width, r)
-	DrawVerticalLine(buffer, x+width, y, y+height, r)
-	DrawHorizontalLine(buffer, x, y+height, y+height, r)
-	DrawVerticalLine(buffer, x, y, y+height, r)
-
+	DrawHorizontalLine(buffer, x, y, width, r)
+	DrawHorizontalLine(buffer, x, y+height, width, r)
+	DrawVerticalLine(buffer, x, y, height, r)
+	DrawVerticalLine(buffer, x+width, y, height, r)
 }
 
 func DrawHorizontalLine(buffer *Buffer, x, y, length int, r rune) {
