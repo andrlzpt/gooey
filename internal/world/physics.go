@@ -4,6 +4,7 @@ type World struct {
 	Bodies  []Body
 	Gravity float64
 	Bounce  float64
+	Paused  bool
 }
 
 func New(gravity, bounce float64) *World {
@@ -18,7 +19,15 @@ func (w *World) AddBody(body Body) {
 	w.Bodies = append(w.Bodies, body)
 }
 
+func (w *World) TogglePause() {
+	w.Paused = !w.Paused
+}
+
 func (w *World) Update(dt float64, width, height int) {
+	if w.Paused {
+		return
+	}
+
 	for i := range w.Bodies {
 		body := &w.Bodies[i]
 
