@@ -81,6 +81,41 @@ func main() {
 	}
 	w.AddBody(particle)
 
+	rect := world.Body{
+		Position: world.Vector{
+			X: 20,
+			Y: 20,
+		},
+		Velocity: world.Vector{
+			X: 0,
+			Y: 0,
+		},
+		Shape: world.Shape{
+			Kind:   world.ShapeRect,
+			Width:  24,
+			Height: 24,
+		},
+		Weightless: true,
+	}
+	w.AddBody(rect)
+
+	circle := world.Body{
+		Position: world.Vector{
+			X: 110,
+			Y: 12,
+		},
+		Velocity: world.Vector{
+			X: -15,
+			Y: 0,
+		},
+		Shape: world.Shape{
+			Kind:   world.ShapeCircle,
+			Radius: 8,
+		},
+		Weightless: false,
+	}
+	w.AddBody(circle)
+
 	commands := make(chan Command, 16)
 	go readCommands(commands)
 
