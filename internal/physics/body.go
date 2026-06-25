@@ -1,4 +1,4 @@
-package world
+package physics
 
 type Vector struct {
 	X float64

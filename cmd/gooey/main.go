@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/andrlzpt/gooey/internal/ascii"
+	"github.com/andrlzpt/gooey/internal/physics"
 	"github.com/andrlzpt/gooey/internal/renderer"
 	"github.com/andrlzpt/gooey/internal/window"
-	"github.com/andrlzpt/gooey/internal/world"
 )
 
 const WindowWidth = 640
@@ -64,34 +64,34 @@ func main() {
 	// if err != nil {
 	// 	panic(err)
 	// }
-	w := world.New(Gravity, Bounce)
-	particle := world.Body{
-		Position: world.Vector{
+	w := physics.New(Gravity, Bounce)
+	particle := physics.Body{
+		Position: physics.Vector{
 			X: float64(buffer.Width / 2),
 			Y: 2,
 		},
-		Velocity: world.Vector{
+		Velocity: physics.Vector{
 			X: 20,
 			Y: 0,
 		},
-		Shape: world.Shape{
-			Kind: world.ShapePoint,
+		Shape: physics.Shape{
+			Kind: physics.ShapePoint,
 		},
 		Weightless: false,
 	}
 	w.AddBody(particle)
 
-	rect := world.Body{
-		Position: world.Vector{
+	rect := physics.Body{
+		Position: physics.Vector{
 			X: 20,
 			Y: 20,
 		},
-		Velocity: world.Vector{
+		Velocity: physics.Vector{
 			X: 0,
 			Y: 0,
 		},
-		Shape: world.Shape{
-			Kind:   world.ShapeRect,
+		Shape: physics.Shape{
+			Kind:   physics.ShapeRect,
 			Width:  24,
 			Height: 24,
 		},
@@ -99,17 +99,17 @@ func main() {
 	}
 	w.AddBody(rect)
 
-	circle := world.Body{
-		Position: world.Vector{
+	circle := physics.Body{
+		Position: physics.Vector{
 			X: 110,
 			Y: 12,
 		},
-		Velocity: world.Vector{
+		Velocity: physics.Vector{
 			X: -15,
 			Y: 0,
 		},
-		Shape: world.Shape{
-			Kind:   world.ShapeCircle,
+		Shape: physics.Shape{
+			Kind:   physics.ShapeCircle,
 			Radius: 8,
 		},
 		Weightless: false,
@@ -142,7 +142,7 @@ func readCommands(commands chan<- Command) {
 
 }
 
-func loop(state *window.State, buffer *ascii.Buffer, world *world.World, commands <-chan Command) {
+func loop(state *window.State, buffer *ascii.Buffer, world *physics.World, commands <-chan Command) {
 	buffer.Clear()
 	// buffer.FillRandom()
 	// ascii.DrawText(buffer, 2, 2, "GOOEY")
@@ -160,7 +160,7 @@ func loop(state *window.State, buffer *ascii.Buffer, world *world.World, command
 	renderer.Render(buffer, renderConfig)
 }
 
-func drawWorld(buffer *ascii.Buffer, w *world.World) {
+func drawWorld(buffer *ascii.Buffer, w *physics.World) {
 	glyph := ascii.Glyphs[len(ascii.Glyphs)-1]
 
 	for _, body := range w.Bodies {
@@ -168,17 +168,17 @@ func drawWorld(buffer *ascii.Buffer, w *world.World) {
 		y := int(body.Position.Y)
 
 		switch body.Shape.Kind {
-		case world.ShapePoint:
+		case physics.ShapePoint:
 			ascii.DrawPoint(buffer, x, y, glyph)
-		case world.ShapeRect:
+		case physics.ShapeRect:
 			ascii.DrawRect(buffer, x, y, body.Shape.Width, body.Shape.Height, glyph)
-		case world.ShapeCircle:
+		case physics.ShapeCircle:
 			ascii.DrawCircle(buffer, x, y, body.Shape.Radius, glyph)
 		}
 	}
 }
 
-func handleCommands(commands <-chan Command, world *world.World) {
+func handleCommands(commands <-chan Command, world *physics.World) {
 	for {
 		select {
 		case command := <-commands:
@@ -189,7 +189,7 @@ func handleCommands(commands <-chan Command, world *world.World) {
 	}
 }
 
-func handleCommand(command Command, world *world.World) {
+func handleCommand(command Command, world *physics.World) {
 	switch command.Raw {
 	case "pause": // glyph := ascii.Glyphs[len(ascii.Glyphs)-1]
 		world.TogglePause()

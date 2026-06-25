@@ -1,4 +1,4 @@
-package world
+package physics
 
 type World struct {
 	Bodies  []Body
