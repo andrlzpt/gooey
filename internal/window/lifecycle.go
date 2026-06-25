@@ -25,6 +25,7 @@ func Run(config Config, loop Loop) {
 		panic(err)
 	}
 	defer glfw.Terminate()
+	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.Floating, glfw.True)
 	window, err := glfw.CreateWindow(config.Width, config.Height, config.Title, nil, nil)
 	if err != nil {
