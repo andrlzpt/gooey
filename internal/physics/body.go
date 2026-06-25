@@ -11,6 +11,7 @@ const (
 	ShapePoint ShapeKind = iota
 	ShapeRect
 	ShapeCircle
+	ShapeTriangle
 )
 
 type Shape struct {
@@ -49,6 +50,11 @@ func (b Body) Bounds() Bounds {
 		bounds.Right = b.Position.X + float64(b.Shape.Radius)
 		bounds.Top = b.Position.Y - float64(b.Shape.Radius)
 		bounds.Bottom = b.Position.Y + float64(b.Shape.Radius)
+	case ShapeTriangle:
+		bounds.Left = b.Position.X - float64(b.Shape.Width)/2
+		bounds.Right = b.Position.X + float64(b.Shape.Width)/2
+		bounds.Top = b.Position.Y
+		bounds.Bottom = b.Position.Y + float64(b.Shape.Height)
 	default:
 		bounds.Left = b.Position.X
 		bounds.Right = b.Position.X

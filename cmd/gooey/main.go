@@ -116,6 +116,24 @@ func main() {
 	}
 	w.AddBody(circle)
 
+	triangle := physics.Body{
+		Position: physics.Vector{
+			X: 120,
+			Y: 15,
+		},
+		Velocity: physics.Vector{
+			X: -15,
+			Y: 0,
+		},
+		Shape: physics.Shape{
+			Kind:   physics.ShapeTriangle,
+			Width:  21,
+			Height: 11,
+		},
+		Weightless: false,
+	}
+	w.AddBody(triangle)
+
 	commands := make(chan Command, 16)
 	go readCommands(commands)
 
@@ -174,6 +192,8 @@ func drawWorld(buffer *ascii.Buffer, w *physics.World) {
 			ascii.DrawRect(buffer, x, y, body.Shape.Width, body.Shape.Height, glyph)
 		case physics.ShapeCircle:
 			ascii.DrawCircle(buffer, x, y, body.Shape.Radius, glyph)
+		case physics.ShapeTriangle:
+			ascii.DrawTriangle(buffer, x, y, body.Shape.Width, body.Shape.Height, glyph)
 		}
 	}
 }
