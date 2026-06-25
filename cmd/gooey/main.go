@@ -12,6 +12,7 @@ import (
 	"github.com/andrlzpt/gooey/internal/ascii"
 	"github.com/andrlzpt/gooey/internal/renderer"
 	"github.com/andrlzpt/gooey/internal/window"
+	"github.com/andrlzpt/gooey/internal/world"
 )
 
 const WindowWidth = 640
@@ -34,18 +35,15 @@ var renderConfig = renderer.Config{
 	CellHeight:   CellHeight,
 }
 
-type Particle struct {
-	X  float64
-	Y  float64
-	VX float64
-	VY float64
-}
-
 const Gravity = 40.0
 const Bounce = 0.8
 
 type Command struct {
 	Raw string
+}
+
+type AppState struct {
+	Paused bool
 }
 
 func main() {
@@ -66,19 +64,28 @@ func main() {
 	// if err != nil {
 	// 	panic(err)
 	// }
-
-	particle := Particle{
-		X:  float64(buffer.Width / 2),
-		Y:  2,
-		VX: 20,
-		VY: 0,
+	w := world.New(Gravity, Bounce)
+	particle := world.Body{
+		Position: world.Vector{
+			X: float64(buffer.Width / 2),
+			Y: 2,
+		},
+		Velocity: world.Vector{
+			X: 20,
+			Y: 0,
+		},
+		Shape: world.Shape{
+			Kind: world.ShapePoint,
+		},
+		Weightless: false,
 	}
+	w.AddBody(particle)
 
 	commands := make(chan Command, 16)
 	go readCommands(commands)
 
 	window.Run(windowConfig, func(state *window.State) {
-		loop(state, buffer, &particle, commands)
+		loop(state, buffer, w, commands)
 	})
 }
 
@@ -100,7 +107,7 @@ func readCommands(commands chan<- Command) {
 
 }
 
-func loop(state *window.State, buffer *ascii.Buffer, particle *Particle, commands <-chan Command) {
+func loop(state *window.State, buffer *ascii.Buffer, world *world.World, commands <-chan Command) {
 	buffer.Clear()
 	// buffer.FillRandom()
 	// ascii.DrawText(buffer, 2, 2, "GOOEY")
@@ -108,68 +115,49 @@ func loop(state *window.State, buffer *ascii.Buffer, particle *Particle, command
 	// if state.IsMouseInsideWindow {
 	// 	eraseCircle(buffer, state)
 	// }
-	// glyph := ascii.Glyphs[len(ascii.Glyphs)-1]
-	// ascii.DrawRect(buffer, 0, 0, 12, 12, glyph)
-
-	// ascii.FillRect(buffer, 24, 0, 12, 12, glyph)
-
-	// ascii.DrawCircle(buffer, 54, 8, 8, glyph)
-
-	// ascii.FillCircle(buffer, 72, 8, 8, glyph)
 
 	// ascii.DrawImage(buffer, img, 0, 0, buffer.Width, buffer.Height)
 	// ascii.DrawImage(buffer, img, 0, 0, 60, 40)
 
-	handleCommands(commands, particle)
-
-	particle.VY += Gravity * state.DeltaTime
-	particle.X += particle.VX * state.DeltaTime
-	particle.Y += particle.VY * state.DeltaTime
-
-	maxX := float64(buffer.Width - 1)
-	maxY := float64(buffer.Height - 1)
-
-	if particle.X < 0 {
-		particle.X = 0
-		particle.VX = -particle.VX * Bounce
-	}
-
-	if particle.X > maxX {
-		particle.X = maxX
-		particle.VX = -particle.VX * Bounce
-	}
-
-	if particle.Y < 0 {
-		particle.Y = 0
-		particle.VY = -particle.VY * Bounce
-	}
-
-	if particle.Y > maxY {
-		particle.Y = maxY
-		particle.VY = -particle.VY * Bounce
-	}
-	ascii.DrawPoint(buffer, int(particle.X), int(particle.Y), '@')
+	handleCommands(commands, world)
+	world.Update(state.DeltaTime, buffer.Width, buffer.Height)
+	drawWorld(buffer, world)
 	renderer.Render(buffer, renderConfig)
 }
 
-func handleCommands(commands <-chan Command, particle *Particle) {
+func drawWorld(buffer *ascii.Buffer, w *world.World) {
+	glyph := ascii.Glyphs[len(ascii.Glyphs)-1]
+
+	for _, body := range w.Bodies {
+		x := int(body.Position.X)
+		y := int(body.Position.Y)
+
+		switch body.Shape.Kind {
+		case world.ShapePoint:
+			ascii.DrawPoint(buffer, x, y, glyph)
+		case world.ShapeRect:
+			ascii.DrawRect(buffer, x, y, body.Shape.Width, body.Shape.Height, glyph)
+		case world.ShapeCircle:
+			ascii.DrawCircle(buffer, x, y, body.Shape.Radius, glyph)
+		}
+	}
+}
+
+func handleCommands(commands <-chan Command, world *world.World) {
 	for {
 		select {
 		case command := <-commands:
-			handleCommand(command, particle)
+			handleCommand(command, world)
 		default:
 			return
 		}
 	}
 }
 
-func handleCommand(command Command, particle *Particle) {
+func handleCommand(command Command, world *world.World) {
 	switch command.Raw {
-	case "reset":
-		particle.X = 160
-		particle.Y = 2
-		particle.VX = 20
-		particle.VY = 0
+	case "pause": // glyph := ascii.Glyphs[len(ascii.Glyphs)-1]
+		world.TogglePause()
 	default:
 		fmt.Println("unknown command:", command.Raw)
 	}
