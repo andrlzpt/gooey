@@ -1,4 +1,4 @@
-package world
+package physics
 
 type World struct {
 	Bodies  []Body
@@ -39,8 +39,9 @@ func (w *World) Update(dt float64, width, height int) {
 		body.Position.Y += body.Velocity.Y * dt
 
 		w.bounceBody(body, width, height)
-
 	}
+
+	w.resolveCollisions()
 }
 
 func (w *World) bounceBody(body *Body, width, height int) {
@@ -67,5 +68,54 @@ func (w *World) bounceBody(body *Body, width, height int) {
 	if bounds.Bottom > maxY {
 		body.Position.Y -= bounds.Bottom - maxY
 		body.Velocity.Y = -body.Velocity.Y * w.Bounce
+	}
+}
+
+func (w *World) resolveCollisions() {
+	for i := 0; i < len(w.Bodies); i++ {
+		for j := i + 1; j < len(w.Bodies); j++ {
+			bodyA := &w.Bodies[i]
+			bodyB := &w.Bodies[j]
+
+			if !bodyA.Collidable || !bodyB.Collidable {
+				continue
+			}
+
+			boundsA := bodyA.Bounds()
+			boundsB := bodyB.Bounds()
+
+			if BoundsOverlap(boundsA, boundsB) {
+
+				overlapX := min(boundsA.Right, boundsB.Right) - max(boundsA.Left, boundsB.Left)
+				overlapY := min(boundsA.Bottom, boundsB.Bottom) - max(boundsA.Top, boundsB.Top)
+
+				if overlapX < overlapY {
+					push := overlapX / 2
+
+					if bodyA.Position.X < bodyB.Position.X {
+						bodyA.Position.X -= push
+						bodyB.Position.X += push
+					} else {
+						bodyA.Position.X += push
+						bodyB.Position.X -= push
+					}
+					bodyA.Velocity.X = -bodyA.Velocity.X * w.Bounce
+					bodyB.Velocity.X = -bodyB.Velocity.X * w.Bounce
+				} else {
+					push := overlapY / 2
+					if bodyA.Position.Y < bodyB.Position.Y {
+						bodyA.Position.Y -= push
+						bodyB.Position.Y += push
+					} else {
+						bodyA.Position.Y += push
+						bodyB.Position.Y -= push
+					}
+
+					bodyA.Velocity.Y = -bodyA.Velocity.Y * w.Bounce
+					bodyB.Velocity.Y = -bodyB.Velocity.Y * w.Bounce
+				}
+
+			}
+		}
 	}
 }

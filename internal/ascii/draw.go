@@ -4,6 +4,56 @@ import "image"
 
 const maxRGBAChannel = 65535
 
+func DrawTriangle(buffer *Buffer, x, y, width, height int, r rune) {
+	if width <= 0 || height <= 0 {
+		return
+	}
+
+	if height == 1 {
+		buffer.Set(x, y, r)
+		return
+	}
+
+	maxHalfWidth := width / 2
+
+	for row := range height {
+		halfWidth := row * maxHalfWidth / height
+		lineY := y + row
+
+		leftX := x - halfWidth
+		rightX := x + halfWidth
+
+		buffer.Set(leftX, lineY, r)
+		buffer.Set(rightX, lineY, r)
+	}
+
+	baseY := y + height
+	baseX := x - maxHalfWidth
+	DrawHorizontalLine(buffer, baseX, baseY, width, r)
+}
+
+func FillTriangle(buffer *Buffer, x, y, width, height int, r rune) {
+	if width <= 0 || height <= 0 {
+		return
+	}
+
+	if height == 1 {
+		buffer.Set(x, y, r)
+		return
+	}
+
+	maxHalfWidth := width / 2
+
+	for row := range height {
+		halfWidth := row * maxHalfWidth / (height - 1)
+		lineX := x - halfWidth
+		lineY := y + row
+		lineLength := halfWidth*2 + 1
+
+		DrawHorizontalLine(buffer, lineX, lineY, lineLength, r)
+	}
+}
+
 func DrawImage(buffer *Buffer, img image.Image, x, y, width, height int) {
 	if width <= 0 || height <= 0 {
 		return
@@ -85,11 +135,10 @@ func FillRect(buffer *Buffer, x, y, width, height int, r rune) {
 }
 
 func DrawRect(buffer *Buffer, x, y, width, height int, r rune) {
-	DrawHorizontalLine(buffer, x, y, x+width, r)
-	DrawVerticalLine(buffer, x+width, y, y+height, r)
-	DrawHorizontalLine(buffer, x, y+height, y+height, r)
-	DrawVerticalLine(buffer, x, y, y+height, r)
-
+	DrawHorizontalLine(buffer, x, y, width, r)
+	DrawHorizontalLine(buffer, x, y+height, width, r)
+	DrawVerticalLine(buffer, x, y, height, r)
+	DrawVerticalLine(buffer, x+width, y, height, r)
 }
 
 func DrawHorizontalLine(buffer *Buffer, x, y, length int, r rune) {

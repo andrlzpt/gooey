@@ -1,4 +1,4 @@
-package world
+package physics
 
 type Vector struct {
 	X float64
@@ -11,6 +11,7 @@ const (
 	ShapePoint ShapeKind = iota
 	ShapeRect
 	ShapeCircle
+	ShapeTriangle
 )
 
 type Shape struct {
@@ -27,6 +28,7 @@ type Body struct {
 	Velocity   Vector
 	Shape      Shape
 	Weightless bool
+	Collidable bool
 }
 
 type Bounds struct {
@@ -34,6 +36,13 @@ type Bounds struct {
 	Right  float64
 	Top    float64
 	Bottom float64
+}
+
+func BoundsOverlap(a, b Bounds) bool {
+	return a.Left <= b.Right &&
+		a.Right >= b.Left &&
+		a.Top <= b.Bottom &&
+		a.Bottom >= b.Top
 }
 
 func (b Body) Bounds() Bounds {
@@ -49,6 +58,11 @@ func (b Body) Bounds() Bounds {
 		bounds.Right = b.Position.X + float64(b.Shape.Radius)
 		bounds.Top = b.Position.Y - float64(b.Shape.Radius)
 		bounds.Bottom = b.Position.Y + float64(b.Shape.Radius)
+	case ShapeTriangle:
+		bounds.Left = b.Position.X - float64(b.Shape.Width)/2
+		bounds.Right = b.Position.X + float64(b.Shape.Width)/2
+		bounds.Top = b.Position.Y
+		bounds.Bottom = b.Position.Y + float64(b.Shape.Height)
 	default:
 		bounds.Left = b.Position.X
 		bounds.Right = b.Position.X
