@@ -28,6 +28,7 @@ type Body struct {
 	Velocity   Vector
 	Shape      Shape
 	Weightless bool
+	Collidable bool
 }
 
 type Bounds struct {
@@ -35,6 +36,13 @@ type Bounds struct {
 	Right  float64
 	Top    float64
 	Bottom float64
+}
+
+func BoundsOverlap(a, b Bounds) bool {
+	return a.Left <= b.Right &&
+		a.Right >= b.Left &&
+		a.Top <= b.Bottom &&
+		a.Bottom >= b.Top
 }
 
 func (b Body) Bounds() Bounds {

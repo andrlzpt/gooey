@@ -78,6 +78,7 @@ func main() {
 			Kind: physics.ShapePoint,
 		},
 		Weightless: false,
+		Collidable: true,
 	}
 	w.AddBody(particle)
 
@@ -96,6 +97,7 @@ func main() {
 			Height: 24,
 		},
 		Weightless: true,
+		Collidable: true,
 	}
 	w.AddBody(rect)
 
@@ -113,6 +115,7 @@ func main() {
 			Radius: 8,
 		},
 		Weightless: false,
+		Collidable: true,
 	}
 	w.AddBody(circle)
 
@@ -131,6 +134,7 @@ func main() {
 			Height: 11,
 		},
 		Weightless: false,
+		Collidable: true,
 	}
 	w.AddBody(triangle)
 
