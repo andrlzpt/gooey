@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"image"
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
@@ -12,11 +13,12 @@ import (
 	"github.com/andrlzpt/gooey/internal/ascii"
 	"github.com/andrlzpt/gooey/internal/physics"
 	"github.com/andrlzpt/gooey/internal/renderer"
+	"github.com/andrlzpt/gooey/internal/sprite"
 	"github.com/andrlzpt/gooey/internal/window"
 )
 
-const WindowWidth = 640
-const WindowHeight = 480
+const WindowWidth = 800
+const WindowHeight = 600
 const CellWidth = 4
 const CellHeight = 4
 
@@ -42,8 +44,9 @@ type Command struct {
 	Raw string
 }
 
-type AppState struct {
-	Paused bool
+type Entity struct {
+	BodyIndex int
+	Sprite    sprite.Animation
 }
 
 func main() {
@@ -54,38 +57,106 @@ func main() {
 	bufferHeight := WindowHeight / CellHeight
 	buffer := ascii.NewBuffer(bufferWidth, bufferHeight)
 
-	// file, err := os.Open("test.png")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// defer file.Close()
+	file, err := os.Open("sheet1.png")
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
 
-	// img, _, err := image.Decode(file)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	img, _, err := image.Decode(file)
+	if err != nil {
+		panic(err)
+	}
+
+	frames, err := sprite.SplitSheet(img, 64, 128)
+	if err != nil {
+		panic(err)
+	}
+	// frames := []image.Image{img}
+	sprite, err := sprite.NewAnimation(frames, 0.25)
+	if err != nil {
+		panic(err)
+	}
+
 	w := physics.New(Gravity, Bounce)
-	particle := physics.Body{
+
+	// particle := physics.Body{
+	// 	Position: physics.Vector{
+	// 		X: float64(buffer.Width / 2),
+	// 		Y: 2,
+	// 	},
+	// 	Velocity: physics.Vector{
+	// 		X: 20,
+	// 		Y: 0,
+	// 	},
+	// 	Shape: physics.Shape{
+	// 		Kind: physics.ShapePoint,
+	// 	},
+	// 	Weightless: false,
+	// 	Collidable: true,
+	// }
+	// w.AddBody(particle)
+
+	// rect := physics.Body{
+	// 	Position: physics.Vector{
+	// 		X: 20,
+	// 		Y: 20,
+	// 	},
+	// 	Velocity: physics.Vector{
+	// 		X: 0,
+	// 		Y: 0,
+	// 	},
+	// 	Shape: physics.Shape{
+	// 		Kind:   physics.ShapeRect,
+	// 		Width:  24,
+	// 		Height: 24,
+	// 	},
+	// 	Weightless: true,
+	// 	Collidable: true,
+	// }
+	// w.AddBody(rect)
+
+	// circle := physics.Body{
+	// 	Position: physics.Vector{
+	// 		X: 110,
+	// 		Y: 12,
+	// 	},
+	// 	Velocity: physics.Vector{
+	// 		X: -15,
+	// 		Y: 0,
+	// 	},
+	// 	Shape: physics.Shape{
+	// 		Kind:   physics.ShapeCircle,
+	// 		Radius: 8,
+	// 	},
+	// 	Weightless: false,
+	// 	Collidable: true,
+	// }
+	// w.AddBody(circle)
+
+	// triangle := physics.Body{
+	// 	Position: physics.Vector{
+	// 		X: 120,
+	// 		Y: 15,
+	// 	},
+	// 	Velocity: physics.Vector{
+	// 		X: -15,
+	// 		Y: 0,
+	// 	},
+	// 	Shape: physics.Shape{
+	// 		Kind:   physics.ShapeTriangle,
+	// 		Width:  21,
+	// 		Height: 11,
+	// 	},
+	// 	Weightless: false,
+	// 	Collidable: true,
+	// }
+	// w.AddBody(triangle)
+
+	spriteBody := physics.Body{
 		Position: physics.Vector{
 			X: float64(buffer.Width / 2),
-			Y: 2,
-		},
-		Velocity: physics.Vector{
-			X: 20,
-			Y: 0,
-		},
-		Shape: physics.Shape{
-			Kind: physics.ShapePoint,
-		},
-		Weightless: false,
-		Collidable: true,
-	}
-	w.AddBody(particle)
-
-	rect := physics.Body{
-		Position: physics.Vector{
-			X: 20,
-			Y: 20,
+			Y: float64(buffer.Height / 2),
 		},
 		Velocity: physics.Vector{
 			X: 0,
@@ -93,56 +164,30 @@ func main() {
 		},
 		Shape: physics.Shape{
 			Kind:   physics.ShapeRect,
-			Width:  24,
-			Height: 24,
+			Width:  64,
+			Height: 128,
 		},
 		Weightless: true,
 		Collidable: true,
 	}
-	w.AddBody(rect)
 
-	circle := physics.Body{
-		Position: physics.Vector{
-			X: 110,
-			Y: 12,
-		},
-		Velocity: physics.Vector{
-			X: -15,
-			Y: 0,
-		},
-		Shape: physics.Shape{
-			Kind:   physics.ShapeCircle,
-			Radius: 8,
-		},
-		Weightless: false,
-		Collidable: true,
-	}
-	w.AddBody(circle)
+	spriteBodyIndex := len(w.Bodies)
+	w.AddBody(spriteBody)
 
-	triangle := physics.Body{
-		Position: physics.Vector{
-			X: 120,
-			Y: 15,
-		},
-		Velocity: physics.Vector{
-			X: -15,
-			Y: 0,
-		},
-		Shape: physics.Shape{
-			Kind:   physics.ShapeTriangle,
-			Width:  21,
-			Height: 11,
-		},
-		Weightless: false,
-		Collidable: true,
+	entity := Entity{
+		BodyIndex: spriteBodyIndex,
+		Sprite:    *sprite,
 	}
-	w.AddBody(triangle)
+
+	entities := []Entity{
+		entity,
+	}
 
 	commands := make(chan Command, 16)
 	go readCommands(commands)
 
 	window.Run(windowConfig, func(state *window.State) {
-		loop(state, buffer, w, commands)
+		loop(state, buffer, w, entities, commands)
 	})
 }
 
@@ -164,7 +209,7 @@ func readCommands(commands chan<- Command) {
 
 }
 
-func loop(state *window.State, buffer *ascii.Buffer, world *physics.World, commands <-chan Command) {
+func loop(state *window.State, buffer *ascii.Buffer, world *physics.World, entities []Entity, commands <-chan Command) {
 	buffer.Clear()
 	// buffer.FillRandom()
 	// ascii.DrawText(buffer, 2, 2, "GOOEY")
@@ -176,9 +221,16 @@ func loop(state *window.State, buffer *ascii.Buffer, world *physics.World, comma
 	// ascii.DrawImage(buffer, img, 0, 0, buffer.Width, buffer.Height)
 	// ascii.DrawImage(buffer, img, 0, 0, 60, 40)
 
-	handleCommands(commands, world)
+	handleCommands(commands, entities, world)
 	world.Update(state.DeltaTime, buffer.Width, buffer.Height)
+
+	for i := range entities {
+		entities[i].Sprite.Update(state.DeltaTime)
+	}
+
 	drawWorld(buffer, world)
+	drawEntities(buffer, world, entities)
+
 	renderer.Render(buffer, renderConfig)
 }
 
@@ -202,21 +254,49 @@ func drawWorld(buffer *ascii.Buffer, w *physics.World) {
 	}
 }
 
-func handleCommands(commands <-chan Command, world *physics.World) {
+func drawEntities(buffer *ascii.Buffer, w *physics.World, entities []Entity) {
+	for i := range entities {
+		entity := &entities[i]
+
+		if entity.BodyIndex < 0 || entity.BodyIndex >= len(w.Bodies) {
+			continue
+		}
+
+		body := w.Bodies[entity.BodyIndex]
+		frame := entity.Sprite.Frame()
+		if frame == nil {
+			continue
+		}
+
+		ascii.DrawImage(
+			buffer,
+			frame,
+			int(body.Position.X),
+			int(body.Position.Y),
+			body.Shape.Width,
+			body.Shape.Height,
+		)
+	}
+}
+
+func handleCommands(commands <-chan Command, entities []Entity, world *physics.World) {
 	for {
 		select {
 		case command := <-commands:
-			handleCommand(command, world)
+			handleCommand(command, entities, world)
 		default:
 			return
 		}
 	}
 }
 
-func handleCommand(command Command, world *physics.World) {
+func handleCommand(command Command, entities []Entity, world *physics.World) {
 	switch command.Raw {
 	case "pause": // glyph := ascii.Glyphs[len(ascii.Glyphs)-1]
 		world.TogglePause()
+		for i := range entities {
+			entities[i].Sprite.TogglePause()
+		}
 	default:
 		fmt.Println("unknown command:", command.Raw)
 	}
